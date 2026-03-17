@@ -81,7 +81,7 @@ def check_ready(
             exit(0)
 
 
-def report(data: ProjectData, milestone: str) -> None:
+def cli_report(data: ProjectData, milestone: str) -> None:
     """
     Report on the pull requests completed in this milestone
     """
@@ -96,7 +96,27 @@ def report(data: ProjectData, milestone: str) -> None:
         total += count
         print(f"{repo: <20} {count: >3} pull requests")
 
+    
     print(f"{total} pull requests completed in {milestone}")
+    
+def file_report(data: ProjectData, milestone: str) -> None:
+    """
+    Write a report on the pull requests completed in this milestone to a file.
+    """
+
+    report_file = Path(f"milestone_report_{milestone.replace(' ', '_')}.txt")
+    with report_file.open("w") as f:
+        f.write(f"Pull requests completed for {milestone}\n\n")
+
+        closed = data.get_milestone(milestone=milestone, status="closed")
+
+        total = 0
+        for repo in closed:
+            count = len(closed[repo])
+            total += count
+            f.write(f"{repo: <20} {count: >3} pull requests\n")
+
+        f.write(f"\n{total} pull requests completed in {milestone}\n")
 
 
 def tidy_unmerged(review_data: ProjectData, milestone: str, dry_run: bool = False):
@@ -221,7 +241,9 @@ def main(
     review_data.archive_milestone(milestone, dry_run=dry)
 
     # Print report as final step so its visible
-    report(review_data, milestone)
+    cli_report(review_data, milestone)
+
+    file_report(review_data, milestone)
 
     # Close milestones
     # TODO: run this command from here, rather than prompting user. Leaving
